@@ -9,5 +9,7 @@
         public int WordsCount { get; set; }
         public int NonAsciiChars { get; set; }
         public int NonAsciiWords { get; set; }
+        public int? KeywordSetCount { get; set; }
+        public List<string>? keywordSet { get; set; }
     }
 }
