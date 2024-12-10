@@ -182,7 +182,7 @@ def ClusterDocumentsWithLabels(documents, model, doc_names, num_clusters=5):
 #     return result
 
 def UseWord2Vec(jsonData, queryWords, matchMode, agmMode):
-    model_path = r'C:\Users\Emma\Desktop\word2vec_model.model'  # 模型儲存路徑
+    model_path = r'C:\Users\User\Desktop\word2vec_model.model'  # 模型儲存路徑
 
     preprocessed_json = PreprocessDocuments(jsonData, queryWords, matchMode)
     preprocessed_data = json.loads(preprocessed_json)
@@ -302,6 +302,24 @@ def GetEditDistanceKeywords(keyword, content, threshold=2):
             wordsSet.add(word)
 
     return wordsSet
+
+def GetTitle(filePath):
+    isXml = filePath.endswith('.xml')
+
+    fileContent = ReadFile(filePath)
+
+    title = ""
+
+    if isXml:
+        soup = BeautifulSoup(fileContent, 'lxml-xml')
+        article = soup.find('Article')
+        if article:
+            articleTitle = article.find('ArticleTitle')
+            title = articleTitle.get_text()
+    else:
+        title = os.path.splitext(os.path.basename(filePath))[0]
+    
+    return title
 
 def GetContent(filePath):
     isXml = filePath.endswith('.xml')
@@ -427,7 +445,7 @@ def TextContentByKeywords(irResult, keywords, match_mode):
 
     return resultDict
 
-def IRResultFile(keywords, matchMode):
+def GetDefaultResult():
     jsonPath = os.path.join(dir, "defaultFiles.json")
     if not os.path.exists(jsonPath):
         print(f"檔案不存在: {jsonPath}")
@@ -435,17 +453,15 @@ def IRResultFile(keywords, matchMode):
     if not jsonData:
         print(f"讀取初始分析檔案失敗")
 
-    # fileContentList = jsonData['IRResult']
+    return jsonData
+
+def IRResultFile(jsonData, keywords, matchMode):
+    # jsonData = GetDefaultResult()
 
     return [dic for fileContentData in jsonData if (dic := TextContentByKeywords(fileContentData, keywords, matchMode))]
 
-def Word2VecFile(keywords, matchMode, agmMode):
-    jsonPath = os.path.join(dir, "defaultFiles.json")
-    if not os.path.exists(jsonPath):
-        print(f"檔案不存在: {jsonPath}")
-    jsonData = ReadJson(jsonPath)
-    if not jsonData:
-        print(f"讀取初始分析檔案失敗")
+def Word2VecFile(jsonData, keywords, matchMode, agmMode):
+    # jsonData = GetDefaultResult()
 
     return UseWord2Vec(jsonData, keywords, matchMode, agmMode)
 
@@ -456,10 +472,12 @@ def IRAllFiles(filePaths):
     for filePath in filePaths:
         file_exists = os.path.exists(filePath)
         content = ""
+        title = ""
         analyzed = False
 
         fileData = {
             "filePath": os.path.basename(filePath),
+            "title": title,
             "content": content,
             "fileStatus": file_exists,
             "analyzed": analyzed
@@ -467,6 +485,7 @@ def IRAllFiles(filePaths):
 
         if file_exists:
             fileData['content'] = GetContent(filePath)  # 使用 extract_content 方法
+            fileData['title'] = GetTitle(filePath)  # 使用 extract_content 方法
             fileInfo = TextCount(fileData)
 
             if fileInfo:
@@ -498,7 +517,7 @@ def PlotWord2Vec(sg):
         data = json.load(f)
 
     # 假設你有一個已經訓練好的 Word2Vec 模型
-    model_path = r"C:\Users\Emma\Desktop\word2vec_model.model"  # 修改為你的模型路徑
+    model_path = r'C:\Users\User\Desktop\word2vec_model.model'  # 修改為你的模型路徑
     model = Word2Vec.load(model_path)  # 加載模型
     word_vectors = model.wv  # 提取詞向量
 
@@ -614,10 +633,11 @@ def GetInput():
 
     if keywordData and len(keywordData[0])!=0 and all(keyword.strip() != "" for keyword in keywordData[0].split(' ')):
         keywords = keywordData[0].split(' ')
+        defaultJsonData = GetDefaultResult()
         if keywordData[2] == 'true':
-            result = Word2VecFile(keywords, keywordData[1], keywordData[3])
+            result = Word2VecFile(defaultJsonData, keywords, keywordData[1], keywordData[3])
         else:
-            result = IRResultFile(keywords, keywordData[1])
+            result = IRResultFile(defaultJsonData, keywords, keywordData[1])
     else:
         jsonPath = os.path.join(dir, "result.json")
         if os.path.exists(jsonPath):
@@ -652,8 +672,6 @@ def GetInput():
         imagePath2 = PlotZipfDistribution(frequencyData["CompareFrequency"],  "CompareFrequencyWithKeyword", fig_num=2)
         imagePath3 = PlotWord2Vec(keywordData[3])
         returnPath = f"{filePath}|{imagePath1}|{imagePath2}|{imagePath3}"
-
- 
 
     print(returnPath, end='')
 #endregion

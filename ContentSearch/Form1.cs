@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Configuration;
 using System.Data;
 using System.Text;
+using System.Windows.Forms;
 
 namespace ContentSearch
 {
@@ -109,6 +110,11 @@ namespace ContentSearch
 
             //HighlightSearchKeywordFromContent();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+        }
         #endregion
 
         #region Functions
@@ -134,7 +140,7 @@ namespace ContentSearch
                 }
             }
 
-            label1.Text = string.Format("Upload Files: {0}",  filePaths.Length);
+            label1.Text = string.Format("Upload Files: {0}", filePaths.Length);
         }
 
         /// <summary>
@@ -324,7 +330,7 @@ namespace ContentSearch
                     contentForm.TopLevel = false;
                     flowLayoutPanel1.Controls.Add(contentForm);
                     contentForm.Show();
-                    if (irResult.KeywordSetCount>0 && irResult.keywordSet!=null)
+                    if (irResult.KeywordSetCount > 0 && irResult.keywordSet != null)
                     {
                         keyWords.AddRange(irResult.keywordSet);
                         contentForm.Highlight(irResult.keywordSet);
@@ -497,7 +503,8 @@ namespace ContentSearch
             #endregion
             OpenImage(filePaths[1]);
             OpenImage(filePaths[2]);
-            if (filePaths.Length>3 && File.Exists(filePaths[3])) {
+            if (filePaths.Length > 3 && File.Exists(filePaths[3]))
+            {
                 OpenImage(filePaths[3]);
             }
 
@@ -527,6 +534,37 @@ namespace ContentSearch
             }
         }
         #endregion
+
+        private void GetSentencesRankBtn_Click(object sender, EventArgs e)
+        {
+            StringBuilder selectedItemsString = new StringBuilder();
+
+            foreach (var item in SelectedFileListBox.SelectedItems)
+            {
+                string fileName = Path.GetFileName(item.ToString());
+                selectedItemsString.Append(fileName);
+                selectedItemsString.Append("&");
+            }
+
+            if (selectedItemsString.Length > 0)
+            {
+                selectedItemsString.Length -= 1;
+            }
+
+            string saveFilePath = Path.Combine(_historyFolder, "selectedItems.txt");
+
+            try
+            {
+                File.WriteAllText(saveFilePath, selectedItemsString.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("¼g¤JÀÉ®×¥¢±Ñ¡G" + ex.Message);
+            }
+
+            SentencesRank sentencesRank = new SentencesRank(saveFilePath);
+            sentencesRank.Show();
+        }
     }
 }
 
